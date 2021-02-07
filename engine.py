@@ -13,7 +13,7 @@ class Person:
         self.position = Vector(random.randrange(0, engine.size), random.randrange(0, engine.size))
         self.home = self.position.copy()
         self.move_target = self.home.copy()
-        self.move_range = MOVE_RANGE
+        self.move_range = engine.move_range
         self.move_speed = MOVE_SPEED
         self.status = "susceptible"
         self.infectious_dur_left = 0
@@ -46,7 +46,7 @@ class Person:
         return (other.position - self.position).length < UNSAFE_DISTANCE
 
     def try_infect(self, other):
-        if random.uniform(0,1) < INFECTIOUS_RATE:
+        if random.uniform(0, 1) < INFECTIOUS_RATE:
             other.status = "infectious"
             other.infectious_dur_left = INFECTIOUS_DURATION
 
@@ -57,12 +57,16 @@ class Engine:
         self.population = population
         self.people = []
 
-    def create(self, population=None):
-        if population:
-            self.population = population
-        self.people = []
-        for i in range(self.population):
-            self.people.append(Person(self))
+    def create(self, env_variables):
+        for key, val in env_variables.items():
+            setattr(self, key, val)
+        self.people = [Person(self) for _ in range(self.population)]
+        # self.people = []
+        # for i in range(self.population):
+        #     self.people.append(Person(self))
+        large_range_people = random.sample(self.people, int(self.population * self.large_range_percent))
+        for person in large_range_people:
+            person.move_range *= 5
 
     def next_frame(self):
         for person in self.people:
@@ -80,4 +84,3 @@ class Engine:
         for person in initial_infected:
             person.status = "infectious"
             person.infectious_dur_left = random.randrange(1, INFECTIOUS_DURATION + 1)
-

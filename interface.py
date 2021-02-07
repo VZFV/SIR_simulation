@@ -8,19 +8,26 @@ POPULATION = 500
 class Interface:
     def __init__(self):
         self.root = tkinter.Tk()
+        self.env_variables = {
+            "population": 500,
+            "move_range": 100,
+            "large_range_percent": 0.05
+        }
+        self.strvars = {}
         self.engine = Engine(CANVAS_SIZE, POPULATION)
         self.create_widgets()
 
     def create_widgets(self):
-        frame = tkinter.Frame(self.root)
-        strvar = tkinter.StringVar(frame)
-        strvar.set(500)
-        label = tkinter.Label(frame, text="Population")
-        entry = tkinter.Entry(frame, textvariable=strvar)
-        label.pack(side=tkinter.LEFT)
-        entry.pack(side=tkinter.LEFT)
-        frame.pack()
-        self.strvar = strvar
+        for var in self.env_variables:
+            frame = tkinter.Frame(self.root)
+            strvar = tkinter.StringVar(frame)
+            strvar.set(self.env_variables[var])
+            label = tkinter.Label(frame, text=var, width=20)
+            entry = tkinter.Entry(frame, textvariable=strvar)
+            label.pack(side=tkinter.LEFT)
+            entry.pack(side=tkinter.LEFT)
+            frame.pack()
+            self.strvars[var] = strvar
         self.canvas = tkinter.Canvas(self.root, height=CANVAS_SIZE, width=CANVAS_SIZE, bg="white")
         self.canvas.pack()
         self.restart_button = tkinter.Button(self.root, text="restart", command=self.restart)
@@ -37,7 +44,7 @@ class Interface:
                                          fill=color[person.status], outline=color[person.status])
 
     def draw_stats(self):
-        self.stats = {"susceptible": 0}
+        self.stats = {}
         for person in self.engine.people:
             self.stats[person.status] = self.stats.get(person.status, 0) + 1
         y_coord = 20
@@ -53,14 +60,16 @@ class Interface:
         self.root.after(30, self.next_frame)
 
     def start(self):
-        self.engine.create()
+        self.engine.create(self.env_variables)
         self.engine.infect(10)
         self.root.after(30, self.next_frame)
         self.root.mainloop()
 
     def restart(self):
-        population = int(self.strvar.get())
-        self.engine.create(population=population)
+        for key in self.env_variables:
+            val_type = type(self.env_variables[key])
+            self.env_variables[key] = val_type(self.strvars[key].get())
+        self.engine.create(self.env_variables)
         self.engine.infect(10)
 
 
