@@ -1,5 +1,7 @@
 import tkinter
 from engine import Engine
+from plot import Plot
+import multiprocessing
 
 CANVAS_SIZE = 800
 POPULATION = 500
@@ -15,6 +17,8 @@ class Interface:
         }
         self.strvars = {}
         self.engine = Engine(CANVAS_SIZE, POPULATION)
+        self.data_queue = multiprocessing.Queue()
+        self.plot = Plot(self.data_queue)
         self.create_widgets()
 
     def create_widgets(self):
@@ -57,12 +61,14 @@ class Interface:
         self.canvas.delete("all")
         self.draw_people()
         self.draw_stats()
+        self.data_queue.put({"type": "data", "data": self.stats.get("infectious", 0)})
         self.root.after(30, self.next_frame)
 
     def start(self):
         self.engine.create(self.env_variables)
         self.engine.infect(10)
         self.root.after(30, self.next_frame)
+        self.plot.start()
         self.root.mainloop()
 
     def restart(self):
@@ -71,6 +77,7 @@ class Interface:
             self.env_variables[key] = val_type(self.strvars[key].get())
         self.engine.create(self.env_variables)
         self.engine.infect(10)
+        self.data_queue.put({"type": "clear"})
 
 
 if __name__ == "__main__":
